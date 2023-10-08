@@ -29,7 +29,7 @@
             <div>
                 <button onclick="login()">Login</button>
                 <button onclick="getDashboard()">Get Dashboard</button>
-            </div>
+                <button onclick="getSettings()">Get Settings</button>
         </main>
         
     </div>
@@ -59,20 +59,55 @@
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
-                })
-                .then(res => {
+                }).then(res => {
                     if (res && res.data && res.data.success) {
                         document.querySelector('h1.row').innerHTML = 'dashboard';
                         document.querySelector('main').innerHTML = res.data.myContent;
+                        history.pushState({ page: 'dashboard' }, 'Dashboard', '/dashboard');
+                        var btn = document.createElement("Button");
+                        btn.innerHTML = "Settings";
+                        btn.setAttribute('onclick', 'getSettings();');
+                        document.querySelector('main').appendChild(btn);
                     } 
                 });
         }
 
+        function getSettings() {
+        const token = localStorage.getItem('jwt');
+        axios.get('/api/settings', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }).then(res => {
+                if (res && res.data && res.data.success) {
+                    document.querySelector('h1.row').innerHTML = 'settings';
+                    document.querySelector('main').innerHTML = res.data.myContent;
+                    history.pushState({ page: 'settings' }, 'Settings', '/settings');                    
+                } 
+            }).catch(error => {
+                if (error.response && error.response.status === 401) {
+                    localStorage.removeItem('jwt');
+                    window.location.href = '/';
+                }
+            });
+        }
+
         function onLoad() {
-            const token = localStorage.getItem('jwt');
-            if (token) {
+            const path = window.location.pathname;
+
+            if (path === '/dashboard') {
                 getDashboard();
+            } else if (path === '/settings') {
+                getSettings();
             }
+            window.onpopstate = function(event) {
+                const path = window.location.pathname;
+                if (path === '/dashboard') {
+                    getDashboard();
+                } else if (path === '/settings') {
+                    getSettings();
+                }
+            };
         }
         onLoad();
     </script>
